@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accessory Matcher - แนะนำแอ็กเซสซอรี่ตามชุดที่ใส่</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #4a69bd);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            padding: 40px;
+        }
+
+        .input-section, .result-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-area {
+            border: 3px dashed #bdc3c7;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: #3498db;
+            background: #ecf0f1;
+        }
+
+        .upload-area.dragover {
+            border-color: #2ecc71;
+            background: #d5f4e6;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #95a5a6;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            display: none;
+        }
+
+        .accessory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .accessory-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .accessory-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .accessory-type {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .accessory-suggestion {
+            color: #7f8c8d;
+            margin-bottom: 8px;
+        }
+
+        .match-reason {
+            background: #e8f5e8;
+            color: #27ae60;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .color-preview {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .uploaded-image {
+            max-width: 100%;
+            border-radius: 12px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                margin: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✨ Accessory Matcher</h1>
+            <p>แนะนำแอ็กเซสซอรี่ที่เข้ากับชุดของคุณแบบ AI</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">📸 ข้อมูลเสื้อผ้าของคุณ</h2>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📷</div>
+                    <p>คลิกหรือลากรูปถ่ายชุดของคุณมาที่นี่</p>
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                </div>
+
+                <div id="uploadedImageContainer"></div>
+
+                <div class="form-group">
+                    <label>ประเภทเสื้อผ้า</label>
+                    <select class="form-control" id="clothingType">
+                        <option value="">เลือกประเภทเสื้อผ้า</option>
+                        <option value="เสื้อเชิ้ต">เสื้อเชิ้ต</option>
+                        <option value="เสื้อยืด">เสื้อยืด</option>
+                        <option value="สูท">สูท</option>
+                        <option value="เดรส">เดรส</option>
+                        <option value="เสื้อกันหนาว">เสื้อกันหนาว</option>
+                        <option value="เสื้อโปโล">เสื้อโปโล</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>สีหลัก</label>
+                    <input type="color" class="form-control" id="primaryColor" value="#000000">
+                </div>
+
+                <div class="form-group">
+                    <label>สีรอง (ถ้ามี)</label>
+                    <input type="color" class="form-control" id="secondaryColor" value="#ffffff">
+                </div>
+
+                <div class="form-group">
+                    <label>ลายหรือพื้นผิว</label>
+                    <select class="form-control" id="pattern">
+                        <option value="เรียบ">เรียบ</option>
+                        <option value="ลายทาง">ลายทาง</option>
+                        <option value="ลายจุด">ลายจุด</option>
+                        <option value="ลายตาราง">ลายตาราง</option>
+                        <option value="ลายดอกไม้">ลายดอกไม้</option>
+                        <option value="อื่นๆ">อื่นๆ</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>โอกาสที่จะใส่</label>
+                    <select class="form-control" id="occasion">
+                        <option value="">เลือกโอกาส</option>
+                        <option value="ทำงาน">ทำงาน</option>
+                        <option value="ไปเที่ยว">ไปเที่ยว</option>
+                        <option value="งานเลี้ยง">งานเลี้ยง</option>
+                        <option value="เดท">เดท</option>
+                        <option value="ใส่ประจำวัน">ใส่ประจำวัน</option>
+                        <option value="งานกีฬา">งานกีฬา</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>สไตล์ที่ชอบ</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="มินิมอล"> มินิมอล
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="วินเทจ"> วินเทจ
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="สตรีท"> สตรีท
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="หรูหรา"> หรูหรา
+                        </label>
+                    </div>
+                </div>
+
+                <button class="btn" onclick="generateRecommendations()">
+                    🔍 ค้นหาแอ็กเซสซอรี่ที่เหมาะสม
+                </button>
+            </div>
+
+            <div class="result-section">
+                <h2 class="section-title">💎 คำแนะนำแอ็กเซสซอรี่</h2>
+                
+                <div class="results" id="results">
+                    <div class="accessory-grid" id="accessoryGrid">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+                
+                <div id="placeholder" style="text-align: center; color: #7f8c8d; padding: 40px;">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">💫</div>
+                    <p>กรุณากรอกข้อมูลเสื้อผ้าเพื่อรับคำแนะนำแอ็กเซสซอรี่</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Accessory database
+        const accessoryDB = {
+            'ต่างหู': {
+                'มินิมอล': ['ต่างหูเงินเรียบ', 'ต่างหูทองขาวเส้นเล็ก', 'ต่างหูไข่มุกเล็ก'],
+                'วินเทจ': ['ต่างหูทองเก่า', 'ต่างหูดีไซน์คลาสสิก', 'ต่างหูพลอยสีเข้ม'],
+                'สตรีท': ['ต่างหูห่วงใหญ่', 'ต่างหูสีสันสด', 'ต่างหูแบบเท่'],
+                'หรูหรา': ['ต่างหูเพชร', 'ต่างหูทองแท้', 'ต่างหูไข่มุกใหญ่']
+            },
+            'สร้อยคอ': {
+                'มินิมอล': ['สร้อยคอเงินเส้นเล็ก', 'สร้อยคอทองขาวเรียบ', 'สร้อยคอจี้เล็ก'],
+                'วินเทจ': ['สร้อยคอทองเก่า', 'สร้อยคอลายไทย', 'สร้อยคอแบบโบราณ'],
+                'สตรีท': ['สร้อยคอโซ่หนา', 'สร้อยคอสีสันสด', 'สร้อยคอแบบเท่'],
+                'หรูหรา': ['สร้อยคอเพชร', 'สร้อยคอทองแท้', 'สร้อยคอไข่มุก']
+            },
+            'นาฬิกา': {
+                'มินิมอล': ['นาฬิกาหน้าขาว สายหนัง', 'นาฬิกาเงินเรียบ', 'นาฬิกาสีดำ-ขาว'],
+                'วินเทจ': ['นาฬิกาทองเก่า', 'นาฬิกาโบราณ', 'นาฬิกาสไตล์ย้อนยุค'],
+                'สตรีท': ['นาฬิกากีฬา', 'นาฬิกาดิจิตอล', 'นาฬิคาสีสันสด'],
+                'หรูหรา': ['นาฬิกาทองแท้', 'นาฬิกาเพชร', 'นาฬิกาแบรนด์เนม']
+            },
+            'กระเป๋า': {
+                'มินิมอล': ['กระเป๋าสีดำเรียบ', 'กระเป๋าหนังสีน้ำตาล', 'กระเป๋าสีเทา'],
+                'วินเทจ': ['กระเป๋าหนังเก่า', 'กระเป๋าสไตล์โบราณ', 'กระเป๋าลายไทย'],
+                'สตรีท': ['กระเป๋าเป้', 'กระเป๋าสีสันสด', 'กระเป๋าแบบเท่'],
+                'หรูหรา': ['กระเป๋าแบรนด์เนม', 'กระเป๋าหนังแท้', 'กระเป๋าตกแต่งเพชร']
+            },
+            'แว่นตา': {
+                'มินิมอล': ['แว่นตาเฟรมโลหะเล็ก', 'แว่นตาไร้เฟรม', 'แว่นตาสีดำเรียบ'],
+                'วินเทจ': ['แว่นตาเฟรมทอง', 'แว่นตาโบราณ', 'แว่นตาแบบย้อนยุค'],
+                'สตรีท': ['แว่นตาสีสันสด', 'แว่นตาแบบเท่', 'แว่นตาใหญ่'],
+                'หรูหรา': ['แว่นตาแบรนด์เนม', 'แว่นตาเฟรมทองแท้', 'แว่นตาตกแต่งเพชร']
+            }
+        };
+
+        // Color matching rules
+        const colorRules = {
+            complementary: (color) => {
+                // Simple complementary color calculation
+                const rgb = hexToRgb(color);
+                return rgbToHex(255 - rgb.r, 255 - rgb.g, 255 - rgb.b);
+            },
+            neutral: ['#000000', '#FFFFFF', '#808080', '#C0C0C0', '#8B4513'],
+            metallic: ['#FFD700', '#C0C0C0', '#CD7F32', '#E5E4E2']
+        };
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
+
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const imageInput = document.getElementById('imageInput');
+        const uploadedImageContainer = document.getElementById('uploadedImageContainer');
+
+        uploadArea.addEventListener('click', () => imageInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleImageUpload(files[0]);
+            }
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleImageUpload(e.target.files[0]);
+            }
+        });
+
+        function handleImageUpload(file) {
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedImageContainer.innerHTML = `
+                        <img src="${e.target.result}" alt="Uploaded clothing" class="uploaded-image">
+                        <p style="text-align: center; color: #27ae60; margin-top: 10px;">✅ รูปภาพถูกอัปโหลดแล้ว</p>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function generateRecommendations() {
+            const clothingType = document.getElementById('clothingType').value;
+            const primaryColor = document.getElementById('primaryColor').value;
+            const secondaryColor = document.getElementById('secondaryColor').value;
+            const pattern = document.getElementById('pattern').value;
+            const occasion = document.getElementById('occasion').value;
+            const styles = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+
+            if (!clothingType || !occasion) {
+                alert('กรุณากรอกประเภทเสื้อผ้าและโอกาสที่จะใส่');
+                return;
+            }
+
+            const recommendations = generateAccessoryRecommendations({
+                clothingType,
+                primaryColor,
+                secondaryColor,
+                pattern,
+                occasion,
+                styles
+            });
+
+            displayRecommendations(recommendations);
+        }
+
+        function generateAccessoryRecommendations(userInput) {
+            const recommendations = [];
+            const selectedStyles = userInput.styles.length > 0 ? userInput.styles : ['มินิมอล'];
+
+            // Generate recommendations for each accessory type
+            Object.keys(accessoryDB).forEach(accessoryType => {
+                selectedStyles.forEach(style => {
+                    const items = accessoryDB[accessoryType][style] || [];
+                    if (items.length > 0) {
+                        const suggestion = items[Math.floor(Math.random() * items.length)];
+                        const matchReason = generateMatchReason(userInput, accessoryType, style);
+                        const recommendedColor = getRecommendedColor(userInput.primaryColor, userInput.pattern);
+                        
+                        recommendations.push({
+                            type: accessoryType,
+                            suggestion: suggestion,
+                            style: style,
+                            reason: matchReason,
+                            color: recommendedColor,
+                            occasion: userInput.occasion
+                        });
+                    }
+                });
+            });
+
+            return recommendations.slice(0, 6); // Limit to 6 recommendations
+        }
+
+        function generateMatchReason(userInput, accessoryType, style) {
+            const reasons = [];
+            
+            if (userInput.pattern === 'เรียบ') {
+                reasons.push('เสื้อผ้าเรียบจึงเหมาะกับแอ็กเซสซอรี่ที่โดดเด่น');
+            } else {
+                reasons.push('เสื้อผ้ามีลายจึงควรใช้แอ็กเซสซอรี่เรียบๆ');
+            }
+            
+            reasons.push(`สไตล์${style}เข้ากับโอกาส${userInput.occasion}`);
+            
+            if (accessoryType === 'นาฬิกา' && userInput.occasion === 'ทำงาน') {
+                reasons.push('เหมาะสำหรับการทำงาน');
+            }
+            
+            return reasons[Math.floor(Math.random() * reasons.length)];
+        }
+
+        function getRecommendedColor(primaryColor, pattern) {
+            if (pattern !== 'เรียบ') {
+                return colorRules.neutral[Math.floor(Math.random() * colorRules.neutral.length)];
+            } else {
+                return colorRules.metallic[Math.floor(Math.random() * colorRules.metallic.length)];
+            }
+        }
+
+        function displayRecommendations(recommendations) {
+            const resultsDiv = document.getElementById('results');
+            const placeholderDiv = document.getElementById('placeholder');
+            const gridDiv = document.getElementById('accessoryGrid');
+            
+            gridDiv.innerHTML = '';
+            
+            recommendations.forEach(rec => {
+                const card = document.createElement('div');
+                card.className = 'accessory-card';
+                card.innerHTML = `
+                    <div class="accessory-type">${rec.type}</div>
+                    <div class="accessory-suggestion">${rec.suggestion}</div>
+                    <div style="margin: 10px 0;">
+                        <span class="color-preview" style="background-color: ${rec.color}"></span>
+                        <span>สี: ${getColorName(rec.color)}</span>
+                    </div>
+                    <div class="match-reason">${rec.reason}</div>
+                `;
+                gridDiv.appendChild(card);
+            });
+            
+            placeholderDiv.style.display = 'none';
+            resultsDiv.style.display = 'block';
+        }
+
+        function getColorName(hex) {
+            const colorNames = {
+                '#000000': 'ดำ',
+                '#FFFFFF': 'ขาว',
+                '#808080': 'เทา',
+                '#C0C0C0': 'เงิน',
+                '#FFD700': 'ทอง',
+                '#CD7F32': 'ทองแดง',
+                '#8B4513': 'น้ำตาล'
+            };
+            return colorNames[hex] || 'สีพิเศษ';
+        }
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accessory Matcher - แนะนำแอ็กเซสซอรี่ตามชุดที่ใส่</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #4a69bd);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            padding: 40px;
+        }
+
+        .input-section, .result-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-area {
+            border: 3px dashed #bdc3c7;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: #3498db;
+            background: #ecf0f1;
+        }
+
+        .upload-area.dragover {
+            border-color: #2ecc71;
+            background: #d5f4e6;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #95a5a6;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            display: none;
+        }
+
+        .accessory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .accessory-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .accessory-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .accessory-type {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .accessory-suggestion {
+            color: #7f8c8d;
+            margin-bottom: 8px;
+        }
+
+        .match-reason {
+            background: #e8f5e8;
+            color: #27ae60;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .color-preview {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .uploaded-image {
+            max-width: 100%;
+            border-radius: 12px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                margin: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✨ Accessory Matcher</h1>
+            <p>แนะนำแอ็กเซสซอรี่ที่เข้ากับชุดของคุณแบบ AI</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">📸 ข้อมูลเสื้อผ้าของคุณ</h2>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📷</div>
+                    <p>คลิกหรือลากรูปถ่ายชุดของคุณมาที่นี่</p>
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                </div>
+
+                <div id="uploadedImageContainer"></div>
+
+                <div class="form-group">
+                    <label>ประเภทเสื้อผ้า</label>
+                    <select class="form-control" id="clothingType">
+                        <option value="">เลือกประเภทเสื้อผ้า</option>
+                        <option value="เสื้อเชิ้ต">เสื้อเชิ้ต</option>
+                        <option value="เสื้อยืด">เสื้อยืด</option>
+                        <option value="สูท">สูท</option>
+                        <option value="เดรส">เดรส</option>
+                        <option value="เสื้อกันหนาว">เสื้อกันหนาว</option>
+                        <option value="เสื้อโปโล">เสื้อโปโล</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>สีหลัก</label>
+                    <input type="color" class="form-control" id="primaryColor" value="#000000">
+                </div>
+
+                <div class="form-group">
+                    <label>สีรอง (ถ้ามี)</label>
+                    <input type="color" class="form-control" id="secondaryColor" value="#ffffff">
+                </div>
+
+                <div class="form-group">
+                    <label>ลายหรือพื้นผิว</label>
+                    <select class="form-control" id="pattern">
+                        <option value="เรียบ">เรียบ</option>
+                        <option value="ลายทาง">ลายทาง</option>
+                        <option value="ลายจุด">ลายจุด</option>
+                        <option value="ลายตาราง">ลายตาราง</option>
+                        <option value="ลายดอกไม้">ลายดอกไม้</option>
+                        <option value="อื่นๆ">อื่นๆ</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>โอกาสที่จะใส่</label>
+                    <select class="form-control" id="occasion">
+                        <option value="">เลือกโอกาส</option>
+                        <option value="ทำงาน">ทำงาน</option>
+                        <option value="ไปเที่ยว">ไปเที่ยว</option>
+                        <option value="งานเลี้ยง">งานเลี้ยง</option>
+                        <option value="เดท">เดท</option>
+                        <option value="ใส่ประจำวัน">ใส่ประจำวัน</option>
+                        <option value="งานกีฬา">งานกีฬา</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>สไตล์ที่ชอบ</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="มินิมอล"> มินิมอล
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="วินเทจ"> วินเทจ
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="สตรีท"> สตรีท
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="หรูหรา"> หรูหรา
+                        </label>
+                    </div>
+                </div>
+
+                <button class="btn" onclick="generateRecommendations()">
+                    🔍 ค้นหาแอ็กเซสซอรี่ที่เหมาะสม
+                </button>
+            </div>
+
+            <div class="result-section">
+                <h2 class="section-title">💎 คำแนะนำแอ็กเซสซอรี่</h2>
+                
+                <div class="results" id="results">
+                    <div class="accessory-grid" id="accessoryGrid">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+                
+                <div id="placeholder" style="text-align: center; color: #7f8c8d; padding: 40px;">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">💫</div>
+                    <p>กรุณากรอกข้อมูลเสื้อผ้าเพื่อรับคำแนะนำแอ็กเซสซอรี่</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Accessory database
+        const accessoryDB = {
+            'ต่างหู': {
+                'มินิมอล': ['ต่างหูเงินเรียบ', 'ต่างหูทองขาวเส้นเล็ก', 'ต่างหูไข่มุกเล็ก'],
+                'วินเทจ': ['ต่างหูทองเก่า', 'ต่างหูดีไซน์คลาสสิก', 'ต่างหูพลอยสีเข้ม'],
+                'สตรีท': ['ต่างหูห่วงใหญ่', 'ต่างหูสีสันสด', 'ต่างหูแบบเท่'],
+                'หรูหรา': ['ต่างหูเพชร', 'ต่างหูทองแท้', 'ต่างหูไข่มุกใหญ่']
+            },
+            'สร้อยคอ': {
+                'มินิมอล': ['สร้อยคอเงินเส้นเล็ก', 'สร้อยคอทองขาวเรียบ', 'สร้อยคอจี้เล็ก'],
+                'วินเทจ': ['สร้อยคอทองเก่า', 'สร้อยคอลายไทย', 'สร้อยคอแบบโบราณ'],
+                'สตรีท': ['สร้อยคอโซ่หนา', 'สร้อยคอสีสันสด', 'สร้อยคอแบบเท่'],
+                'หรูหรา': ['สร้อยคอเพชร', 'สร้อยคอทองแท้', 'สร้อยคอไข่มุก']
+            },
+            'นาฬิกา': {
+                'มินิมอล': ['นาฬิกาหน้าขาว สายหนัง', 'นาฬิกาเงินเรียบ', 'นาฬิกาสีดำ-ขาว'],
+                'วินเทจ': ['นาฬิกาทองเก่า', 'นาฬิกาโบราณ', 'นาฬิกาสไตล์ย้อนยุค'],
+                'สตรีท': ['นาฬิกากีฬา', 'นาฬิกาดิจิตอล', 'นาฬิคาสีสันสด'],
+                'หรูหรา': ['นาฬิกาทองแท้', 'นาฬิกาเพชร', 'นาฬิกาแบรนด์เนม']
+            },
+            'กระเป๋า': {
+                'มินิมอล': ['กระเป๋าสีดำเรียบ', 'กระเป๋าหนังสีน้ำตาล', 'กระเป๋าสีเทา'],
+                'วินเทจ': ['กระเป๋าหนังเก่า', 'กระเป๋าสไตล์โบราณ', 'กระเป๋าลายไทย'],
+                'สตรีท': ['กระเป๋าเป้', 'กระเป๋าสีสันสด', 'กระเป๋าแบบเท่'],
+                'หรูหรา': ['กระเป๋าแบรนด์เนม', 'กระเป๋าหนังแท้', 'กระเป๋าตกแต่งเพชร']
+            },
+            'แว่นตา': {
+                'มินิมอล': ['แว่นตาเฟรมโลหะเล็ก', 'แว่นตาไร้เฟรม', 'แว่นตาสีดำเรียบ'],
+                'วินเทจ': ['แว่นตาเฟรมทอง', 'แว่นตาโบราณ', 'แว่นตาแบบย้อนยุค'],
+                'สตรีท': ['แว่นตาสีสันสด', 'แว่นตาแบบเท่', 'แว่นตาใหญ่'],
+                'หรูหรา': ['แว่นตาแบรนด์เนม', 'แว่นตาเฟรมทองแท้', 'แว่นตาตกแต่งเพชร']
+            }
+        };
+
+        // Color matching rules
+        const colorRules = {
+            complementary: (color) => {
+                // Simple complementary color calculation
+                const rgb = hexToRgb(color);
+                return rgbToHex(255 - rgb.r, 255 - rgb.g, 255 - rgb.b);
+            },
+            neutral: ['#000000', '#FFFFFF', '#808080', '#C0C0C0', '#8B4513'],
+            metallic: ['#FFD700', '#C0C0C0', '#CD7F32', '#E5E4E2']
+        };
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
+
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const imageInput = document.getElementById('imageInput');
+        const uploadedImageContainer = document.getElementById('uploadedImageContainer');
+
+        uploadArea.addEventListener('click', () => imageInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleImageUpload(files[0]);
+            }
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleImageUpload(e.target.files[0]);
+            }
+        });
+
+        function handleImageUpload(file) {
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedImageContainer.innerHTML = `
+                        <img src="${e.target.result}" alt="Uploaded clothing" class="uploaded-image">
+                        <p style="text-align: center; color: #27ae60; margin-top: 10px;">✅ รูปภาพถูกอัปโหลดแล้ว</p>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function generateRecommendations() {
+            const clothingType = document.getElementById('clothingType').value;
+            const primaryColor = document.getElementById('primaryColor').value;
+            const secondaryColor = document.getElementById('secondaryColor').value;
+            const pattern = document.getElementById('pattern').value;
+            const occasion = document.getElementById('occasion').value;
+            const styles = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+
+            if (!clothingType || !occasion) {
+                alert('กรุณากรอกประเภทเสื้อผ้าและโอกาสที่จะใส่');
+                return;
+            }
+
+            const recommendations = generateAccessoryRecommendations({
+                clothingType,
+                primaryColor,
+                secondaryColor,
+                pattern,
+                occasion,
+                styles
+            });
+
+            displayRecommendations(recommendations);
+        }
+
+        function generateAccessoryRecommendations(userInput) {
+            const recommendations = [];
+            const selectedStyles = userInput.styles.length > 0 ? userInput.styles : ['มินิมอล'];
+
+            // Generate recommendations for each accessory type
+            Object.keys(accessoryDB).forEach(accessoryType => {
+                selectedStyles.forEach(style => {
+                    const items = accessoryDB[accessoryType][style] || [];
+                    if (items.length > 0) {
+                        const suggestion = items[Math.floor(Math.random() * items.length)];
+                        const matchReason = generateMatchReason(userInput, accessoryType, style);
+                        const recommendedColor = getRecommendedColor(userInput.primaryColor, userInput.pattern);
+                        
+                        recommendations.push({
+                            type: accessoryType,
+                            suggestion: suggestion,
+                            style: style,
+                            reason: matchReason,
+                            color: recommendedColor,
+                            occasion: userInput.occasion
+                        });
+                    }
+                });
+            });
+
+            return recommendations.slice(0, 6); // Limit to 6 recommendations
+        }
+
+        function generateMatchReason(userInput, accessoryType, style) {
+            const reasons = [];
+            
+            if (userInput.pattern === 'เรียบ') {
+                reasons.push('เสื้อผ้าเรียบจึงเหมาะกับแอ็กเซสซอรี่ที่โดดเด่น');
+            } else {
+                reasons.push('เสื้อผ้ามีลายจึงควรใช้แอ็กเซสซอรี่เรียบๆ');
+            }
+            
+            reasons.push(`สไตล์${style}เข้ากับโอกาส${userInput.occasion}`);
+            
+            if (accessoryType === 'นาฬิกา' && userInput.occasion === 'ทำงาน') {
+                reasons.push('เหมาะสำหรับการทำงาน');
+            }
+            
+            return reasons[Math.floor(Math.random() * reasons.length)];
+        }
+
+        function getRecommendedColor(primaryColor, pattern) {
+            if (pattern !== 'เรียบ') {
+                return colorRules.neutral[Math.floor(Math.random() * colorRules.neutral.length)];
+            } else {
+                return colorRules.metallic[Math.floor(Math.random() * colorRules.metallic.length)];
+            }
+        }
+
+        function displayRecommendations(recommendations) {
+            const resultsDiv = document.getElementById('results');
+            const placeholderDiv = document.getElementById('placeholder');
+            const gridDiv = document.getElementById('accessoryGrid');
+            
+            gridDiv.innerHTML = '';
+            
+            recommendations.forEach(rec => {
+                const card = document.createElement('div');
+                card.className = 'accessory-card';
+                card.innerHTML = `
+                    <div class="accessory-type">${rec.type}</div>
+                    <div class="accessory-suggestion">${rec.suggestion}</div>
+                    <div style="margin: 10px 0;">
+                        <span class="color-preview" style="background-color: ${rec.color}"></span>
+                        <span>สี: ${getColorName(rec.color)}</span>
+                    </div>
+                    <div class="match-reason">${rec.reason}</div>
+                `;
+                gridDiv.appendChild(card);
+            });
+            
+            placeholderDiv.style.display = 'none';
+            resultsDiv.style.display = 'block';
+        }
+
+        function getColorName(hex) {
+            const colorNames = {
+                '#000000': 'ดำ',
+                '#FFFFFF': 'ขาว',
+                '#808080': 'เทา',
+                '#C0C0C0': 'เงิน',
+                '#FFD700': 'ทอง',
+                '#CD7F32': 'ทองแดง',
+                '#8B4513': 'น้ำตาล'
+            };
+            return colorNames[hex] || 'สีพิเศษ';
+        }
+    </script>
+</body>
+</html>
